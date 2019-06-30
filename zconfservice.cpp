@@ -41,7 +41,7 @@ public:
             {
             case AVAHI_ENTRY_GROUP_ESTABLISHED:
                 emit serviceGroup->entryGroupEstablished();
-                qDebug() << ("Service '" % serviceGroup->d_ptr->name % "' successfully establised.");
+                qDebug() << ("Service '" % serviceGroup->d_ptr->name % "' successfully established.");
                 break;
             case AVAHI_ENTRY_GROUP_COLLISION:
                 emit serviceGroup->entryGroupNameCollision();

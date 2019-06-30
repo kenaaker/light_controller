@@ -48,7 +48,7 @@ protected:
     ZConfServicePrivate *const d_ptr;
 
 private:
-    Q_DECLARE_PRIVATE(ZConfService);
+    Q_DECLARE_PRIVATE(ZConfService)
 };
 
 #endif // ZCONFSERVICE_H

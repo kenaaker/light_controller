@@ -18,8 +18,9 @@
  */
 
 #include <QDebug>
-#include "qt-watch.h"
+#include <avahi-core/core.h>
 #include <avahi-common/error.h>
+#include "qt-watch.h"
 #include "zconfserviceclient.h"
 
 void ZConfServiceClient::run() {
