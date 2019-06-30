@@ -63,15 +63,15 @@ signals:
     void socket_down();
 
 public slots:
-    void secureConnect();
-    void sendData(QString &cmd);
+    void secure_connect();
+    void send_data(QString &cmd);
 
 private slots:
-    void socketStateChanged(QAbstractSocket::SocketState state);
-    void socketEncrypted();
-    void socketReadyRead();
-    void socketDisconnected();
-    void sslErrors(const QList<QSslError> &errors);
+    void socket_state_changed(QAbstractSocket::SocketState state);
+    void socket_encrypted();
+    void socket_ready_read();
+    void socket_disconnected();
+    void ssl_errors(const QList<QSslError> &errors);
 
 private:
     QString light_controller_host_name_or_ip;

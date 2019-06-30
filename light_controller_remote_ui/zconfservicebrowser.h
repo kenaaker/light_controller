@@ -24,8 +24,7 @@
 #include <stdint.h>
 #include <avahi-client/lookup.h>
 
-struct ZConfServiceEntry
-{
+struct ZConfServiceEntry {
     QString                ip;
     QString                domain;
     QString                host;
@@ -43,8 +42,7 @@ struct ZConfServiceEntry
 };
 
 class ZConfServiceBrowserPrivate;
-class ZConfServiceBrowser : public QObject
-{
+class ZConfServiceBrowser : public QObject {
     Q_OBJECT
 
 public:

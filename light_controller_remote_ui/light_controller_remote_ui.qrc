@@ -3,6 +3,6 @@
         <file>light_controller_ca.pem</file>
         <file>light_controller_client.key</file>
         <file>light_controller_client.pem</file>
-        <file>light_controller_system_certificate.pem</file>
+        <file>light_controller_server.pem</file>
     </qresource>
 </RCC>

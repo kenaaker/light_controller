@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QMessageBox>
-#include "light_controller_remote_ui_class.h"
+#include "light_controller_remote_ui.h"
 
 int main(int argc, char *argv[]) {
 

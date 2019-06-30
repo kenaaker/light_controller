@@ -12,7 +12,7 @@ TARGET = light_controller_remote_ui
 TEMPLATE = app
 
 SOURCES += main.cpp\
-        light_controller_remote_ui_class.cpp \
+        light_controller_remote_ui.cpp \
         ssl_client.cpp \
         qt-watch.cpp \
         zconfservice.cpp \
@@ -20,7 +20,7 @@ SOURCES += main.cpp\
         zconfservicebrowser.cpp
 
 HEADERS  += \
-        light_controller_remote_ui_class.h \
+        light_controller_remote_ui.h \
         ssl_client.h \
         qt-watch.h \
         zconfservice.h \
