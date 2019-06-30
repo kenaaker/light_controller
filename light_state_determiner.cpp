@@ -1,10 +1,11 @@
 #include "light_state_determiner.h"
+#include <QDebug>
 
 light_state_determiner::light_state_determiner() {
     light_intensity_value = 0;
     last_time_occupancy_sensor_fired = QTime(0, 0, 0, 0); /* Start with sense having never fired */
     occupancy_timeout_delta = QTime(0, 5, 0, 0);    /* Use 5 minutes as timeout value default */
-    user_light_setting = off;
+    user_light_setting = undefined;
 }
 
 void light_state_determiner::set_light_intensity(unsigned int light_in) {
@@ -33,6 +34,8 @@ void light_state_determiner::set_occupancy_timeout_delta(QTime &timeout_value) {
 
 light_states light_state_determiner::light_should_be(void) {
     light_states ret_value;
+
+    // qDebug() << __func__ << " Entered.";
     if (user_light_setting == on) {
         ret_value = on;
     } else if (user_light_setting == off) {
@@ -49,28 +52,37 @@ light_states light_state_determiner::light_should_be(void) {
             ret_value = off;
         } else {
             /* Now check the light intensity to see if we should turn the light on. */
-            if (light_intensity_value > turn_on_low_bound) {
+            //qDebug("%s:%d. light_intensity_value=%d turn_on_low_bound=%d turn_off_high_bound=%d",
+            //       __func__, __LINE__, light_intensity_value, turn_on_low_bound, turn_off_high_bound);
+            if (light_intensity_value < turn_on_low_bound) {
+                // qDebug() << __func__ << " Intensity check says turn light on";
                 ret_value = on;
             } else {
-                if (light_intensity_value < turn_off_high_bound) {
+                if (light_intensity_value > turn_off_high_bound) {
+                    // qDebug() << __func__ << " Intensity check says turn light off";
                     ret_value = off;
                 }
             }
         }
     }
+    //qDebug() << __func__ << " Exited ret_value =" << ret_value;
     return ret_value;
-}
-
-void light_state_determiner::user_set_light_off(void) {
-    user_light_setting = off;
 }
 
 light_states light_state_determiner::user_set_light_state(void) {
     return user_light_setting;
 }
 
+void light_state_determiner::user_set_light_off(void) {
+    user_light_setting = off;
+}
+
 void light_state_determiner::user_set_light_on(void) {
     user_light_setting = on;
+}
+
+void light_state_determiner::user_set_light_to_default(void) {
+    user_light_setting = undefined;
 }
 
 void light_state_determiner::set_turn_on_low_bound(unsigned int new_low_bound) {

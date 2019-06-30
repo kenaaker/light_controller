@@ -43,6 +43,7 @@ private:
     light_controller_sslsock cmd_server;
     ZConfService *light_controller_svc;
     void set_light_state(void);
+    QString response_line;
 };
 
 #endif // LIGHT_CONTROLLER_H

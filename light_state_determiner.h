@@ -19,6 +19,7 @@ class light_state_determiner {
     light_states light_should_be(void);
     void user_set_light_off(void);
     void user_set_light_on(void);
+    void user_set_light_to_default(void);
     light_states user_set_light_state(void);
 
   private:

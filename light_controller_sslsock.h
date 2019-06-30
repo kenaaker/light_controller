@@ -10,7 +10,7 @@
 
 class light_controller_sslsock : public QTcpServer {
     Q_OBJECT
-
+public:
     void incomingConnection(qintptr socketDescriptor);
     void send_line(QString &a_line);
     QString recv_line(void);

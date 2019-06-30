@@ -14,6 +14,13 @@ light_controller_remote_ui::light_controller_remote_ui(QWidget *parent) : QMainW
     connect(ui->dimmer_slider, &QSlider::valueChanged, this, &light_controller_remote_ui::light_controller_dimmer_set);
     connect(ui->toggle_on_off, &QPushButton::toggled,
             this, &light_controller_remote_ui::toggle_on_off_clicked);
+    qDebug() << " Setting up QTimer for overall light state poll.";
+    light_state_poll = new QTimer(this);
+    QObject::connect(light_state_poll, &QTimer::timeout,
+                     this, &light_controller_remote_ui::read_remote_light_controller);
+
+    light_state_poll->start(1000);
+
 }
 
 light_controller_remote_ui::~light_controller_remote_ui() {
@@ -23,11 +30,21 @@ light_controller_remote_ui::~light_controller_remote_ui() {
 
 void light_controller_remote_ui::service_found(QString service_string) {
     ZConfServiceEntry this_service;
-    qDebug() << "Found light_controller at " << service_string;
-    this_service = light_controller_service->serviceEntry(service_string);
-    qDebug() << "Service entry is " << this_service.ip << "protocol is " << this_service.protocolName() << "host" << this_service.host << "port is" << this_service.port;
-    light_controller_connection.set_server_ip(this_service.ip);
-    light_controller_connection.set_server_port(this_service.port);
+    QString modded_local_address;
+
+    if (!light_controller_connection.is_server_ip_set()) {
+        qDebug() << "Found light_controller at " << service_string;
+        this_service = light_controller_service->serviceEntry(service_string);
+        qDebug() << "Service entry is " << this_service.ip << "protocol is " << this_service.protocolName() << "host" << this_service.host << "port is" << this_service.port;
+        if ((this_service.protocolName() == "IPv6") && (this_service.ip.startsWith("fe80::"))) {
+            modded_local_address = this_service.ip + "%eth0";
+        } else {
+            modded_local_address = this_service.ip;
+        }
+        qDebug() << "Service entry after setup is " << modded_local_address << "protocol is " << this_service.protocolName() << "host" << this_service.host << "port is" << this_service.port;
+        light_controller_connection.set_server_ip(modded_local_address);
+        light_controller_connection.set_server_port(this_service.port);
+    }
 }
 
 void light_controller_remote_ui::socket_up() {
@@ -50,7 +67,23 @@ void light_controller_remote_ui::exit_button_pressed() {
     qApp->quit();
 }
 
+void light_controller_remote_ui::read_remote_light_controller(void) {
+    QString cmd("get_light_state");
+    if (light_controller_connection.get_socket_state() == QAbstractSocket::ConnectedState) {
+        light_controller_connection.send_data(cmd);
+    }
+}
+
 void light_controller_remote_ui::light_controller_dimmer_set(int value) {
-    QString cmd("light_controller" + QString(value));
+    QString cmd("light_controller_dimmer" + QString(value));
     light_controller_connection.send_data(cmd);
+}
+
+void light_controller_remote_ui::on_reset_to_default_clicked() {
+    QString cmd("reset_to_default");
+
+    qDebug() << __func__ << __LINE__ << "Here ";
+    light_controller_connection.send_data(cmd);
+    qDebug() << __func__ << __LINE__ << "Here ";
+
 }

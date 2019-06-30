@@ -54,13 +54,24 @@ public:
     void set_server_ip(QString &host_name_or_ip) {
         light_controller_host_name_or_ip = host_name_or_ip;
     }
+    QString &get_server_ip(void) {
+        return light_controller_host_name_or_ip;
+    }
+    bool is_server_ip_set(void) {
+        return !light_controller_host_name_or_ip.isEmpty();
+    }
     void set_server_port(unsigned short port) {
         light_controller_port = port;
     }
+    QAbstractSocket::SocketState get_socket_state(void) {
+        return socket->state();
+    }
+    QByteArray get_remote_data(void);
 
 signals:
     void socket_up();
     void socket_down();
+    void remote_data_ready();
 
 public slots:
     void secure_connect();
@@ -77,6 +88,7 @@ private:
     QString light_controller_host_name_or_ip;
     unsigned short light_controller_port;
     QSslSocket *socket;
+    QByteArray remote_line;
     QTimer reconnect_timer;
 };
 

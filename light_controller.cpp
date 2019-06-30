@@ -47,6 +47,8 @@ light_controller::light_controller(QWidget *parent) :
                      this, &light_controller::light_intensity_changed);
 
     qDebug() << " Setting up QTimer for polling light sensor.";
+    light_state_d.set_turn_on_low_bound(50);
+    light_state_d.set_turn_off_high_bound(60);
     light_sensor_poll = new QTimer(this);
     QObject::connect(light_sensor_poll, &QTimer::timeout,
                      &light_intensity_converter, &i2c_ad_da_converter::poll_ad_value);
@@ -68,7 +70,7 @@ light_controller::light_controller(QWidget *parent) :
     QObject::connect(light_state_poll, &QTimer::timeout,
                      this, &light_controller::set_light_state);
 
-    light_state_poll->start(1000);
+    light_state_poll->start(100);
 
     qDebug() << __func__ << " Entered, starting listen on 48049";
     if (!cmd_server.listen(QHostAddress::Any, 48049)) {
@@ -125,7 +127,6 @@ void light_controller::command_proc(QString &cmd) {
     if (cmd == "toggle_on_off") {
         light_states current_light_state = light_state_d.user_set_light_state();
 
-        qDebug() << "old light state = " << current_light_state;
         if (current_light_state == off) {
             qDebug() << "old light state indicates off, turning on.";
             light_state_d.user_set_light_on();
@@ -133,11 +134,22 @@ void light_controller::command_proc(QString &cmd) {
             qDebug() << "old light state indicates on, turning off.";
             light_state_d.user_set_light_off();
         } else  if (current_light_state == undefined) {
-            qDebug() << "old light state never set, turning on.";
-            light_state_d.user_set_light_on();
+            light_states proposed_light_state = light_state_d.light_should_be();
+            if (proposed_light_state == off) {
+                light_state_d.user_set_light_on();
+            } else {
+                light_state_d.user_set_light_off();
+            }
         } else {
             qDebug() << "Don't understand this new command = " << cmd;
         }
+    } else if (cmd == "reset_to_default") {
+        qDebug() << "reset_to_default = " << cmd;
+        light_state_d.user_set_light_to_default();
+    } else if (cmd == "get_light_state") {
+        qDebug() << "get_light_state";
+        response_line = QString("Something, something\n");
+        cmd_server.send_line(response_line);
     } else if (cmd == "dimmer_setting") {
         qDebug() << "dimmer_setting command = " << cmd;
     } else {

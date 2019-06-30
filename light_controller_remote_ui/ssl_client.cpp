@@ -54,7 +54,7 @@ void SslClient::secure_connect() {
     if (!socket) {
         socket = new QSslSocket(this);
     } /* endif */
-    qDebug() << "secureConnect Entered socket state is " << socket->state();
+    qDebug() << __func__ << " Entered socket state is " << socket->state();
     if ((socket->state() == QAbstractSocket::ConnectedState) ||
             (socket->state() == QAbstractSocket::ConnectingState)) {
         reconnect_timer.stop();
@@ -63,9 +63,11 @@ void SslClient::secure_connect() {
         if (light_controller_host_name_or_ip.isEmpty()) {
             connect(&reconnect_timer, SIGNAL(timeout()), this, SLOT(secure_connect()));
             reconnect_timer.start(2000);    /* Try to reconnect every two seconds */
-            qDebug() << "Attempting to connect to light controller in 2 seconds.";
+            qDebug("%s:%d Attempting to connect to light controller in 2 seconds. No hostname or IP available.",
+                   __func__, __LINE__);
         } else {
-            qDebug() << __func__ << __LINE__ << "Here ";
+            qDebug("%s:%d Attempting to connect to light controller at %s port %d.",
+                   __func__, __LINE__, light_controller_host_name_or_ip.toStdString().c_str(), light_controller_port);
             /* Add self-signed client and server certificates and CA */
             socket->addCaCertificates(":/light_controller_ca.pem");
             socket->setLocalCertificate(":/light_controller_client.pem");
@@ -75,7 +77,7 @@ void SslClient::secure_connect() {
             connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
                     this, SLOT(socket_state_changed(QAbstractSocket::SocketState)));
             connect(socket, SIGNAL(encrypted()), this, SLOT(socket_encrypted()));
-            connect(socket, SIGNAL(ssl_errors(QList<QSslError>)), this, SLOT(ssl_errors(QList<QSslError>)));
+            connect(socket, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(ssl_errors(const QList<QSslError>)));
             connect(socket, SIGNAL(readyRead()), this, SLOT(socket_ready_read()));
             connect(socket, SIGNAL(disconnected()), this, SLOT(socket_disconnected()));
             connect(&reconnect_timer, SIGNAL(timeout()), this, SLOT(secure_connect()));
@@ -94,7 +96,7 @@ void SslClient::secure_connect() {
             qDebug() << __func__ << __LINE__ << "Here ";
             socket->connectToHostEncrypted(light_controller_host_name_or_ip, light_controller_port,
                                            QIODevice::ReadWrite,
-                                           QAbstractSocket::AnyIPProtocol);
+                                           QAbstractSocket::IPv6Protocol);
             qDebug() << __func__ << __LINE__ << "Here ";
         } /* endif */
     } /* endif */
@@ -108,11 +110,9 @@ void SslClient::socket_state_changed(QAbstractSocket::SocketState state) {
         socket = nullptr;
         reconnect_timer.start(2000);    /* Try to reconnect every two seconds */
     } else if (state == QAbstractSocket::ConnectedState) {
-        qDebug() << __func__ << " Entered, socket host is " << socket->peerName();
         emit socket_up();
         reconnect_timer.stop();
     } else {
-        qDebug() << __func__ << " Entered, socket host is " << socket->peerName();
     } /* endif */
 }
 
@@ -126,7 +126,14 @@ void SslClient::socket_encrypted() {
 }
 
 void SslClient::socket_ready_read() {
+    qDebug() << __func__ << __LINE__ << "Here ";
+    remote_line = socket->readLine(remote_line.capacity());
+    qDebug("read \"%s\" %d bytes", remote_line.toStdString().c_str(), remote_line.size());
+    qDebug() << __func__ << __LINE__ << "Here ";
+}
 
+QByteArray SslClient::get_remote_data(void) {
+    return remote_line;
 }
 
 /* This will try to reconnect by using a timer */
@@ -138,12 +145,11 @@ void SslClient::send_data(QString &cmd) {
     QByteArray local_cmd;
     local_cmd.append(cmd);
 
-    qDebug() << __func__ << __LINE__ << "Here ";
-    socket->write(local_cmd, local_cmd.size());
-    qDebug("wrote %d bytes", local_cmd.size());
-    socket->flush();
-    qDebug() << __func__ << __LINE__ << "Here ";
-
+    if (socket->state() == QAbstractSocket::ConnectedState) {
+        socket->write(local_cmd, local_cmd.size());
+        qDebug("wrote \"%s\" %d bytes", local_cmd.toStdString().c_str(), local_cmd.size());
+        socket->flush();
+    }
 }
 
 void SslClient::ssl_errors(const QList<QSslError> &errors) {

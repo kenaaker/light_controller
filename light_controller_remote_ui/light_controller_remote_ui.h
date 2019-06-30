@@ -21,15 +21,18 @@ public slots:
     void socket_down();
     void service_found(QString);
     void exit_button_pressed();
+    void read_remote_light_controller();
 
 private slots:
     void toggle_on_off_clicked(bool);
     void light_controller_dimmer_set(int value);
+    void on_reset_to_default_clicked();
 
 private:
     Ui::light_controller_remote_ui *ui;
     SslClient light_controller_connection;
     ZConfServiceBrowser *light_controller_service;
+    QTimer *light_state_poll;
 };
 
 #endif // LIGHT_CONTROLLER_REMOTE_UI_H
