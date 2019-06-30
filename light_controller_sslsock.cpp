@@ -1,28 +1,16 @@
-#include "dispensary_sslsock.h"
+#include "light_controller_sslsock.h"
 #include <QSslKey>
+#include <QSettings>
+#include <QFile>
+#include <QApplication>
 
-#define CACERTIFICATES_FILE "dispensary_ca.pem"
-#define LOCALCERTIFICATE_FILE "dispensary_system_certificate.pem"
-#define PRIVATEKEY_FILE "dispensary_system_certificate.key"
+#define CACERTIFICATES_FILE ":/light_controller_ca.pem"
+#define LOCALCERTIFICATE_FILE ":/light_controller_server.pem"
+#define PRIVATEKEY_FILE ":/light_controller_server.key"
 
-void kennel_fan_sslsock::connect_to_db() {
-    QSettings db_settings("Dispensary", "dispenser_db");
+void light_controller_sslsock::incomingConnection(qintptr socketDescriptor) {
 
-
-    db = QSqlDatabase::addDatabase("QPSQL");
-    db.setHostName(db_settings.value("db_host").value<QString>());
-    db.setDatabaseName("dispensary");
-    db.setUserName(db_settings.value("db_user").value<QString>());
-    db.setPassword(db_settings.value("open").value<QString>());
-    bool ok = db.open();
-    if (!ok) {
-        qDebug() << "Database open failed with erorr " << db.lastError();
-    }
-}
-
-void kennel_fan_sslsock::incomingConnection(qintptr socketDescriptor) {
-
-    qDebug("dispensary_sslsock::incomingConnection(%d)", socketDescriptor);
+    qDebug("%s:%d Socket Descriptor is %d", __func__, __LINE__, socketDescriptor);
     socket = new QSslSocket();
     if (!socket) {
         qWarning("not enough memory to create new QSslSocket");
@@ -39,20 +27,21 @@ void kennel_fan_sslsock::incomingConnection(qintptr socketDescriptor) {
     } /* endif */
 } /* incomingConnection */
 
-void kennel_fan_sslsock::send_line(QString &a_line) {
+void light_controller_sslsock::send_line(QString &a_line) {
     socket->write(a_line.toLatin1(), a_line.size());
 }
 
-QString kennel_fan_sslsock::recv_line() {
+QString light_controller_sslsock::recv_line() {
     QByteArray in_buff(256, ' ');
     socket->readLine(in_buff.size());
     return QString(in_buff);
 }
 
-void kennel_fan_sslsock::startServerEncryption() {
+void light_controller_sslsock::startServerEncryption() {
     bool b;
     QFile file(PRIVATEKEY_FILE);
 
+    qDebug() << __func__ << " Entered socket state is " << socket->state();
     file.open(QIODevice::ReadOnly);
     if (!file.isOpen()) {
         qWarning("couldn't open %s", PRIVATEKEY_FILE);
@@ -82,7 +71,10 @@ void kennel_fan_sslsock::startServerEncryption() {
     }
 }
 
-void kennel_fan_sslsock::connectSocketSignals() {
+void light_controller_sslsock::connectSocketSignals() {
+
+    qDebug() << __func__ << " Entered socket state is " << socket->state();
+
     connect(socket, SIGNAL(encrypted()), this, SLOT(slot_encrypted()));
     connect(socket, SIGNAL(encryptedBytesWritten(qint64)),
             this, SLOT(slot_encryptedBytesWritten(qint64)));
@@ -106,64 +98,63 @@ void kennel_fan_sslsock::connectSocketSignals() {
             this, SLOT(slot_proxyAuthenticationRequired(const QNetworkProxy &, QAuthenticator *)));
     connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
             this, SLOT(slot_stateChanged(QAbstractSocket::SocketState)));
-//    connect_to_db();
 }
 
-void kennel_fan_sslsock::slot_encrypted() {
-    qDebug("dispensary_sslsock::slot_encrypted");
+void light_controller_sslsock::slot_encrypted() {
+    qDebug("light_controller_sslsock::slot_encrypted");
 }
 
-void kennel_fan_sslsock::slot_encryptedBytesWritten(qint64 written) {
-    qDebug("dispensary_sslsock::slot_encryptedBytesWritten(%ld)", (long) written);
+void light_controller_sslsock::slot_encryptedBytesWritten(qint64 written) {
+    qDebug("light_controller_sslsock::slot_encryptedBytesWritten(%ld)", (long) written);
 }
 
-void kennel_fan_sslsock::slot_modeChanged(QSslSocket::SslMode mode) {
-    qDebug("dispensary_sslsock::slot_modeChanged(%d)", mode);
+void light_controller_sslsock::slot_modeChanged(QSslSocket::SslMode mode) {
+    qDebug("light_controller_sslsock::slot_modeChanged(%d)", mode);
 }
 
-void kennel_fan_sslsock::slot_peerVerifyError(const QSslError &) {
-    qDebug("dispensary_sslsock::slot_peerVerifyError");
+void light_controller_sslsock::slot_peerVerifyError(const QSslError &) {
+    qDebug("light_controller_sslsock::slot_peerVerifyError");
 }
 
-void kennel_fan_sslsock::slot_sslErrors(const QList<QSslError> &) {
-    qDebug("dispensary_sslsock::slot_sslErrors");
+void light_controller_sslsock::slot_sslErrors(const QList<QSslError> &) {
+    qDebug("light_controller_sslsock::slot_sslErrors");
 }
 
-void kennel_fan_sslsock::slot_readyRead() {
+void light_controller_sslsock::slot_readyRead() {
     QByteArray rem_command;
 
-    qDebug("dispensary_sslsock::slot_readyRead");
+    qDebug("light_controller_sslsock::slot_readyRead");
 
     rem_command = socket->readLine(256);
     if (rem_command.size() < 2) {
-        abort();
+        QApplication::quit();
     } else {
         current_command = QString(rem_command);
         emit command_received(current_command);
     } /* endif */
 }
 
-void kennel_fan_sslsock::slot_connected() {
-    qDebug("dispensary_sslsock::slot_connected");
+void light_controller_sslsock::slot_connected() {
+    qDebug("light_controller_sslsock::slot_connected");
 }
 
-void kennel_fan_sslsock::slot_disconnected() {
-    qDebug("dispensary_sslsock::slot_disconnected");
+void light_controller_sslsock::slot_disconnected() {
+    qDebug("light_controller_sslsock::slot_disconnected");
 }
 
-void kennel_fan_sslsock::slot_error(QAbstractSocket::SocketError err) {
-    qDebug() << "dispensary_sslsock::slot_error(" << err << ")";
+void light_controller_sslsock::slot_error(QAbstractSocket::SocketError err) {
+    qDebug() << "light_controller_sslsock::slot_error(" << err << ")";
     qDebug() << socket->errorString();
 }
 
-void kennel_fan_sslsock::slot_hostFound() {
-    qDebug("dispensary_sslsock::slot_hostFound");
+void light_controller_sslsock::slot_hostFound() {
+    qDebug("light_controller_sslsock::slot_hostFound");
 }
 
-void kennel_fan_sslsock::slot_proxyAuthenticationRequired(const QNetworkProxy &, QAuthenticator *) {
-    qDebug("dispensary_sslsock::slot_proxyAuthenticationRequired");
+void light_controller_sslsock::slot_proxyAuthenticationRequired(const QNetworkProxy &, QAuthenticator *) {
+    qDebug("light_controller_sslsock::slot_proxyAuthenticationRequired");
 }
 
-void kennel_fan_sslsock::slot_stateChanged(QAbstractSocket::SocketState state) {
-    qDebug() << "dispensary_sslsock::slot_stateChanged(" << state << ")";
+void light_controller_sslsock::slot_stateChanged(QAbstractSocket::SocketState state) {
+    qDebug() << "light_controller_sslsock::slot_stateChanged(" << state << ")";
 }

@@ -1,13 +1,14 @@
-#ifndef DISPENSARY_SSLSOCK_H
-#define DISPENSARY_SSLSOCK_H
+#ifndef LIGHT_CONTROLLER_SSLSOCK_H
+#define LIGHT_CONTROLLER_SSLSOCK_H
 
 #include <QTcpServer>
 #include <QSslSocket>
 #include <QList>
 #include <QDomDocument>
-#include <QtSql>
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlError>
 
-class kennel_fan_sslsock : public QTcpServer {
+class light_controller_sslsock : public QTcpServer {
     Q_OBJECT
 
     void incomingConnection(qintptr socketDescriptor);
@@ -20,13 +21,10 @@ signals:
 private:
 
     QSslSocket *socket;
-    QSqlDatabase db;
     QString current_command;
-
 
     void startServerEncryption();
     void connectSocketSignals();
-    void connect_to_db();
 
 private slots:
 
@@ -46,4 +44,4 @@ private slots:
     void slot_readyRead();
 };
 
-#endif // DISPENSARY_SSLSOCK_H
+#endif // LIGHT_CONTROLLER_SSLSOCK_H
