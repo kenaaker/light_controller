@@ -22,7 +22,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++11
 
-INCLUDEPATH += ../kennel_fan_controller
+INCLUDEPATH += ../kennel_fan_controller ./common_includes
 
 LIBS += -lavahi-common -lavahi-client -lavahi-qt5
 
@@ -32,6 +32,7 @@ SOURCES += \
     i2c_ad_da_converter.cpp \
     light_state_determiner.cpp \
     main.cpp \
+    old_light_controller.cpp \
     zconfservice.cpp \
     zconfserviceclient.cpp \
     ../kennel_fan_controller/lin_gpio_util.cpp \
@@ -39,6 +40,9 @@ SOURCES += \
     ../kennel_fan_controller/lin_pwm.cpp
 
 HEADERS += \
+    common_includes/fixedendian.h \
+    common_includes/transport_record.h \
+    common_includes/var_st_xport.h \
     light_controller.h \
     light_controller_sslsock.h \
     i2c_ad_da_converter.h \
